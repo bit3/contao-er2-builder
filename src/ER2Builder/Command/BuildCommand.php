@@ -133,32 +133,13 @@ class BuildCommand extends Command
 
 
 		if (file_exists($tempRepository . '/composer.lock')) {
-			$lock = json_decode(file_get_contents($tempRepository . '/composer.lock'), true);
-
-			if (isset($lock['packages'])) {
-				foreach ($lock['packages'] as $index => $package) {
-					if (
-						$package['name'] == 'contao/core' ||
-						$package['name'] == 'contao-community-alliance/composer' ||
-						$package['name'] == 'contao-community-alliance/composer-installer' ||
-						$package['name'] == 'contao-community-alliance/composer-plugin' ||
-						in_array($package['type'], array('legacy-contao-module', 'contao-module'))
-					) {
-						$config['replace'][$package['name']] = '*';
-						unset($lock['packages'][$index]);
-					}
-				}
-
-				$lock['packages'] = array_values($lock['packages']);
-			}
-
-			file_put_contents($tempRepository . '/composer.lock', json_encode($lock));
+			unlink($tempRepository . '/composer.lock');
 		}
 
 		file_put_contents($tempRepository . '/composer.json', json_encode($config, JSON_PRETTY_PRINT));
 
 		$output->writeln('  - <info>Install dependencies</info>');
-		$process = new Process('php ' . escapeshellarg($root . '/composer.phar') . ' install --no-dev', $tempRepository);
+		$process = new Process('php ' . escapeshellarg($root . '/composer.phar') . ' install --prefer-dist --no-dev', $tempRepository);
 		$process->setTimeout(120);
 		$process->run($writethru);
 		if (!$process->isSuccessful()) {
